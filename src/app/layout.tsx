@@ -9,8 +9,23 @@ import { SiteFooter } from "@/components/site-footer";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { PointerLight } from "@/components/pointer-light";
 
-const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-const baseUrl = new URL(configuredUrl || "http://localhost:3000");
+// Vercel injects its own deployment hostnames at build time, so the canonical
+// link and Open Graph URLs resolve without any manual configuration.
+// `VERCEL_PROJECT_PRODUCTION_URL` is the stable production domain, which keeps
+// preview deployments pointing their canonical at the real site.
+const configuredUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+  process.env.VERCEL_URL ||
+  ""
+).trim();
+
+// The Vercel variables are bare hostnames; the explicit one may already carry a scheme.
+const baseUrl = new URL(
+  /^https?:\/\//.test(configuredUrl)
+    ? configuredUrl
+    : `https://${configuredUrl || "localhost:3000"}`,
+);
 
 export const metadata: Metadata = {
   metadataBase: baseUrl,
@@ -38,7 +53,7 @@ export const metadata: Metadata = {
     siteName: `${site.name} — ${site.role}`,
     title: meta.title,
     description: meta.description,
-    url: configuredUrl || undefined,
+    url: configuredUrl ? baseUrl.href : undefined,
     images: [
       {
         url: meta.ogImage,
